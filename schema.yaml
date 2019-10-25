@@ -1,0 +1,216 @@
+application_api_version: v1beta1
+properties:
+  APP_INSTANCE_NAME:
+    type: string
+    default: elassandra-operator
+    x-google-marketplace:
+      type: NAME
+  NAMESPACE:
+    type: string
+    x-google-marketplace:
+      type: NAMESPACE
+  APP_IMAGE:
+    type: string
+    default: $REGISTRY:$TAG
+    x-google-marketplace:
+      type: IMAGE
+
+  operator.ServiceAccount:
+    type: string
+    x-google-marketplace:
+      type: SERVICE_ACCOUNT
+      serviceAccount:
+        roles:
+          - type: ClusterRole
+            rulesType: CUSTOM
+            rules:
+              - apiGroups:
+                  - extensions
+                resources:
+                  - thirdpartyresources
+                verbs:
+                  - '*'
+              - apiGroups:
+                  - apiextensions.k8s.io
+                resources:
+                  - customresourcedefinitions
+                verbs:
+                  - '*'
+              - apiGroups:
+                  - stable.strapdata.com
+                resources:
+                  - elassandradatacenter
+                  - elassandradatacenters
+                  - elassandradatacenter/status
+                  - elassandradatacenters/status
+                  - elassandratask
+                  - elassandratasks
+                  - elassandratask/status
+                  - elassandratasks/status
+                verbs:
+                  - '*'
+              - apiGroups:
+                  - apps
+                resources:
+                  - statefulsets
+                  - deployments
+                verbs: ['*']
+              - apiGroups: ['']
+                resources:
+                  - configmaps
+                  - secrets
+                verbs: ['*']
+              - apiGroups: ['']
+                resources:
+                  - pods
+                verbs: ['list', 'delete']
+              - apiGroups: ['']
+                resources:
+                  - services
+                  - endpoints
+                  - persistentvolumeclaims
+                  - persistentvolumes
+                verbs: ['get', 'create', 'update', 'delete', 'list']
+              - nonResourceURLs: ["/version", "/version/*"]
+                verbs: ['get']
+              - apiGroups: ['']
+                resources:
+                  - nodes
+                verbs: ['list', 'watch']
+              - apiGroups: ['']
+                resources:
+                  - namespaces
+                verbs: ['list']
+
+  config_cluster_name:
+    title: Name of the elassandra cluster
+    type: string
+    default: "elassandra"
+
+  config_datacenter:
+    title: Name of the elassandra datacenter
+    type: string
+    default: "datacenter"
+
+  config_replicas:
+    title: Number of elassandra nodes
+    type: integer
+    default: 1
+    minimum: 1
+
+  config_replicas_mode:
+    title: Attribution of the number of elassandra nodes
+    type: string
+    default: "manual"
+    enum:
+    - "manual"
+    #- "n"
+    #- "n-1"
+
+  config_elastic_enabled:
+    title: Enabled ElasticSearch
+    type: boolean
+    default: true
+
+  config_prometheus_enabled:
+    title: Enabled Prometheus exporter
+    type: boolean
+    default: true
+
+  config_reaper_enabled:
+    title: Enabled Cassandra Reaper
+    type: boolean
+    default: false
+
+  config_elassandra_limit_cpu:
+    title: CPU limit set for elassandra container
+    type: string
+    default: "1000m"
+
+  config_elassandra_limit_mem:
+    title: Memory limit set for elassandra container
+    type: string
+    default: "2Gi"
+
+  config_elassandra_req_cpu:
+    title: CPU requested for elassandra container
+    type: string
+    default: "500m"
+
+  config_elassandra_req_mem:
+    title: Memory requested for elassandra container
+    type: string
+    default: "1Gi"
+
+  config_data_volume_storage_size:
+    title: Elassandra claimed storage size
+    type: string
+    default: "500Mi"
+
+  config_native_port:
+    title: Cassandra Native port number
+    type: integer
+    default: 39042
+    minimum: 1024
+    maximum: 65535
+
+  config_storage_port:
+    title: Cassandra Storage port number
+    type: integer
+    default: 37000
+    minimum: 1024
+    maximum: 65535
+
+  config_ssl_storage_port:
+    title: Cassandra SSL Storage port number
+    type: integer
+    default: 37001
+    minimum: 1024
+    maximum: 65535
+
+  config_jmx_port:
+    title: JMX port number
+    type: integer
+    default: 7199
+    minimum: 1024
+    maximum: 65535
+
+  config_use_ssl:
+    title: Use SSL to secure connections
+    type: boolean
+    default: true
+
+  config_op_http_port:
+    title: Operator port number
+    type: integer
+    default: 8080
+    minimum: 1024
+    maximum: 65535
+
+  config_op_jmx_port:
+    title: Operator port number
+    type: integer
+    default: 7199
+    minimum: 1024
+    maximum: 65535
+
+  config_node_info_secret:
+    title: Token extracted from the NodeInfo ServiceAccount
+    type: string
+
+required:
+- APP_INSTANCE_NAME
+- NAMESPACE
+- APP_IMAGE
+- config_node_info_secret
+
+x-google-marketplace:
+  clusterConstraints:
+    resources:
+    - replicas: 1
+      requests:
+        cpu: 500m
+        memory: 4Gi
+      affinity:
+        simpleNodeAffinity:
+          type: REQUIRE_ONE_NODE_PER_REPLICA

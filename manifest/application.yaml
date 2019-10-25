@@ -1,0 +1,145 @@
+apiVersion: app.k8s.io/v1beta1
+kind: Application
+metadata:
+  name: "$APP_INSTANCE_NAME"
+  namespace: "$NAMESPACE"
+  annotations:
+    kubernetes-engine.cloud.google.com/icon: >-
+      data:image/png;base64,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
+    kubernetes-engine.cloud.google.com/support: >-
+      Strapdata provides consulting, support and enterprise grade features for elassandra.
+  labels:
+    app.kubernetes.io/name: "$APP_INSTANCE_NAME"
+    app: "$APP_INSTANCE_NAME"
+    component: application
+spec:
+  descriptor:
+    type: Elassandra Enterprise Operator
+    description: |-
+      Elassandra is an opensource storage and search engine for large-scale real-time applications.
+      By coupling the search engine Elasticsearch and the distributed database Apache Cassandra,
+      Elassandra simplify your data stack and provides a strong plateforme for rich and innovative applications.
+      This operator aims to simplify the elassandra usage in Kubernetes (scale up/down, backup & restore...)
+    maintainers:
+      - name: Strapdata, SAS.
+        url: https://www.strapdata.com
+    keywords:
+      - cassandra
+      - elasticsearch
+      - big data
+      - operator
+      - elassandra
+      - strapdata
+    links:
+      - description: GKE User Guide
+        url: https://github.com/strapdata/strapkop-google-k8s-marketplace
+      - description: Elassandra documentation
+        url: http://doc.elassandra.io/en/latest/
+      - description: Apache Cassandra documentation
+        url: http://cassandra.apache.org/doc/latest/
+      - description: Support
+        url: https://support.strapdata.com
+        ## TODO CHANGE this note to explain the operator usage
+    notes: |-
+      # Getting Started with Elassandra
+
+      The [Elassandra on GKE User Guide](https://github.com/strapdata/elassandra-google-k8s-marketplace/) contains a lot of helpful hints on how to get started and use your elassandra cluster.
+
+      Upon launching this application, it may take up to a few minutes for your cluster pods to be deployed, and for the elassandra cluster to fully form and become available.
+
+      # Set env variables according to your cluster
+
+      Set the following environnement variables according to your deployment:
+      ```bash
+      export NAMESPACE={{ .Release.Namespace }}
+      export APP_INSTANCE_NAME={{ .Release.Name }}
+      export ELASSANDRA_POD=$(kubectl get pods -n $NAMESPACE -l app=elassandra,release=$APP_INSTANCE_NAME -o jsonpath='{.items[0].metadata.name}')
+      ```
+
+      # Accessing Cassandra
+
+      Check your cassandra cluster status by running the following commands :
+      ```shell
+      kubectl exec "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- nodetool status
+      ```
+
+      Connect to Cassandra using CQLSH:
+      ```shell
+      kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- cqlsh
+      ```
+
+      # Accessing Elasticsearch
+
+      Check Elasticsearch cluster state and list indices:
+      ```
+      kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- curl http://localhost:9200/_cluster/state?pretty
+      kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- curl http://localhost:9200/_cat/indices?v
+      ```
+
+      Add a JSON document:
+      ```
+      kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- curl -XPUT -H "Content-Type: application/json" http://localhost:9200/test/mytype/1 -d '{ "foo":"bar" }'
+      ```
+
+      # Accessing Elassandra using the headless service
+
+      A headless service creates a DNS record for each elassandra pod. For instance :
+      ```
+      $ELASSANDRA_POD.$APP_INSTANCE_NAME.default.svc.cluster.local
+      ```
+
+      Clients running inside the same k8s cluster could use thoses records to access both CQL, ES HTTP, ES transport, JMX and thrift protocols.
+
+      # Accessing Elassandra with port forwarding
+
+      You could also use a local proxy to access the service.
+
+      Run the following command in a separate background terminal:
+      ```shell
+      kubectl port-forward "$ELASSANDRA_POD" 9042:9042 9200:9200 --namespace "$NAMESPACE"
+      ```
+
+      In you main terminal :
+      ```shell
+      curl localhost:9200
+      cqlsh --cqlversion=3.4.4
+      ```
+
+      # Deploy a Kibana pod (requires helm installed)
+
+      Start a Kibana pod with the same Elasticsearch version as the one provided by Elassandra. By default, Kibana connects to the Elasticsearch service on port 9200.
+
+      ```
+      helm install --namespace "$NAMESPACE" --name kibana --set image.tag=6.2.3 --set service.externalPort=5601 stable/kibana
+      ```
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "$APP_INSTANCE_NAME"
+  componentKinds:
+    - group: apps/v1
+      kind: Deployment
+    - group: batch/v1
+      kind: Job
+    - group: v1
+      kind: PersistentVolumeClaim
+    - group: apps/v1beta2
+      kind: StatefulSet
+    - group: policy/v1beta1
+      kind: PodDisruptionBudget
+    - group: apps/v1
+      kind: Secret
+    - group: apps/v1
+      kind: ConfigMap
+    - group: apps/v1
+      kind: Pod
+    - group: apps/v1beta2
+      kind: ReplicaSet
+    - group: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+    - group: apps/v1
+      kind: Service
+    - group: extensions/v1beta1
+      kind: Ingress

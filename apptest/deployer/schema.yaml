@@ -1,0 +1,22 @@
+properties:
+  testerImage:
+    type: string
+    default: $REGISTRY/tester:$TAG
+    x-google-property:
+      type: IMAGE
+
+  config_replicas:
+    title: Number of elassandra nodes
+    type: integer
+    default: 3
+    minimum: 1
+
+  config_prometheus_enabled:
+    title: Enabled Prometheus exporter
+    type: boolean
+    default: false
+
+  config_node_info_secret:
+    title: Token extracted from the NodeInfo ServiceAccount
+    type: string
+    default: "__NODEINFO_TOKEN__"

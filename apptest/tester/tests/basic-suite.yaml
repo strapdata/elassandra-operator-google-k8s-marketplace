@@ -1,0 +1,125 @@
+actions:
+- name: Operator deployed successfully
+  bashTest:
+    script: |-
+      set -xe
+      function info {
+        >&2 echo "${@}"
+      }
+
+      function get_operator_name = {
+        kubectl get deployments --namespace "${NAMESPACE}" -L operator=elassandra -o=jsonpath='{$.items[0].metadata.name}'
+      }
+
+      function get_current_number_of_replicas_in_operator {
+        kubectl get sts "${OPERATOR_NAME}" \
+          --namespace "${NAMESPACE}" \
+          --output jsonpath='{.status.readyReplicas}'
+      }
+
+      function wait_for_healthy_operator {
+        info "Waiting for operator"
+        while [[ $(get_current_number_of_replicas_in_operator) -ne 1 ]]; do
+          info "Sleeping 10 seconds before rechecking..."
+          sleep 10
+        done
+        info "Statefulset has equal current and desired number of replicas"
+      }
+
+      OPERATOR_NAME=$(get_operator_name)
+      wait_for_healthy_sts
+      kubectl get deployments "${OPERATOR_NAME}" \
+        --namespace "${NAMESPACE}" \
+        --output jsonpath='{.status.readyReplicas}'
+    expect:
+      statusCode:
+        equals: 0
+- name: StatefulSet deployed successfully
+  bashTest:
+    script: |-
+      set -xe
+      function info {
+        >&2 echo "${@}"
+      }
+
+      function get_desired_number_of_replicas_in_sts {
+        kubectl get sts "${STS_NAME}" \
+          --namespace "${NAMESPACE}" \
+          --output jsonpath='{.spec.replicas}'
+      }
+
+      function get_current_number_of_replicas_in_sts {
+        kubectl get sts "${STS_NAME}" \
+          --namespace "${NAMESPACE}" \
+          --output jsonpath='{.status.readyReplicas}'
+      }
+
+      function wait_for_healthy_sts {
+        info "Waiting for equal desired and current number of replicas"
+        while [[ $(get_current_number_of_replicas_in_sts) -ne $(get_desired_number_of_replicas_in_sts) ]]; do
+          info "Sleeping 10 seconds before rechecking..."
+          sleep 10
+        done
+        info "Statefulset has equal current and desired number of replicas"
+      }
+
+      STS_NAME=$(get_sts_name)
+      wait_for_healthy_sts
+      kubectl get sts "${STS_NAME}" \
+        --namespace "${NAMESPACE}" \
+        --output jsonpath='{.status.readyReplicas}'
+    expect:
+      statusCode:
+        equals: 0
+- name: Wait for pods to be ready
+  bashTest:
+    script: |-
+      set -ex
+
+      is_pod_ready() {
+         [[ "$(kubectl get po "$1" --namespace ${NAMESPACE} -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}')" == 'True' ]]
+      }
+
+      wait_pod_ready(){
+        while true; do
+          echo "waiting for pod $1 to be ready"
+          is_pod_ready $1 && return 0
+          sleep 1
+        done
+      }
+
+      STS_NAME=$(get_sts_name)
+      wait_pod_ready ${STS_NAME}-0
+      wait_pod_ready ${STS_NAME}-1
+      wait_pod_ready ${STS_NAME}-2
+    expect:
+      statusCode:
+        equals: 0
+- name: Execute CQL query
+  bashTest:
+    script: |-
+      set -x
+      STS_NAME=$(get_sts_name)
+      CASSANDRA_PASSWORD=$(get_cassandra_password)
+      export CQLSH_HOST=${STS_NAME}-0.${STS_NAME}.${NAMESPACE}.svc.cluster.local
+      echo $CQLSH_HOST
+      cqlsh -u cassandra -p ${CASSANDRA_PASSWORD} -e 'SHOW HOST' --cqlversion="3.4.4" 2>&1
+    expect:
+      stdout:
+        contains: 'Connected to'
+      statusCode:
+        equals: 0
+
+- name: Execute ES REST query
+  bashTest:
+    script: |-
+      set -x
+      STS_NAME=$(get_sts_name)
+      CASSANDRA_PASSWORD=$(get_cassandra_password)
+      export ES_HOST=${STS_NAME}-0.${STS_NAME}.${NAMESPACE}.svc.cluster.local
+      curl -u "cassandra:${CASSANDRA_PASSWORD}" "https://${ES_HOST}:9200/" 2>&1
+    expect:
+      stdout:
+        contains: "cluster_name"
+      statusCode:
+        equals: 0
