@@ -41,77 +41,76 @@ spec:
         url: https://support.strapdata.com
         ## TODO CHANGE this note to explain the operator usage
     notes: |-
-      # Getting Started with Elassandra
+      # Getting started with Elassandra & Elassandra Operator
 
-      The [Elassandra on GKE User Guide](https://github.com/strapdata/elassandra-google-k8s-marketplace/) contains a lot of helpful hints on how to get started and use your elassandra cluster.
+      ### Set up your GKE environment
 
-      Upon launching this application, it may take up to a few minutes for your cluster pods to be deployed, and for the elassandra cluster to fully form and become available.
+      Set up your environment as describe in [GKE quickstart](https://cloud.google.com/kubernetes-engine/docs/quickstart):
+        ```
+        gcloud config set project <your-gcp-project>
+        gcloud config set compute/zone <your-zone>
+        gcloud container clusters get-credentials <your-gke-cluster-name>
+        ```
 
-      # Set env variables according to your cluster
+      ### Set env variables according to your cluster
 
-      Set the following environnement variables according to your deployment:
-      ```bash
-      export NAMESPACE={{ .Release.Namespace }}
-      export APP_INSTANCE_NAME={{ .Release.Name }}
-      export ELASSANDRA_POD=$(kubectl get pods -n $NAMESPACE -l app=elassandra,release=$APP_INSTANCE_NAME -o jsonpath='{.items[0].metadata.name}')
-      ```
+      Set up the following environment variables in accordance with your deployment:
+        ```
+        export NAMESPACE=default
+        export APP_INSTANCE_NAME=elassandra-1
+        export ELASSANDRA_POD=$(kubectl get pods -n $NAMESPACE -l app=elassandra -l app.kubernetes.io/managed-by=elassandra-operator -o jsonpath='{.items[0].metadata.name}')
+        ```
 
-      # Accessing Cassandra
+      ### Accessing Cassandra
 
-      Check your cassandra cluster status by running the following commands :
-      ```shell
-      kubectl exec "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- nodetool status
-      ```
+      Check your Cassandra cluster status by running the following command :
+        ```shell
+        kubectl exec "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- nodetool status
+        ```
 
-      Connect to Cassandra using CQLSH:
-      ```shell
-      kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- cqlsh
-      ```
+      Connect to Cassandra using cqlsh:
+        ```shell
+        # retrive cassandra user password
+        CASS_PASSWORD=$(kubectl get secrets elassandra-${CLUSTER_NAME} -o yaml | grep "cassandra.cassandra_password" | cut -f2 -d':' | tr -d ' ' | base64 -d)
+        kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- cqlsh -u cassandra -p ${CASS_PASSWORD}
+        ```
 
-      # Accessing Elasticsearch
+      ### Accessing Elasticsearch
 
-      Check Elasticsearch cluster state and list indices:
-      ```
-      kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- curl http://localhost:9200/_cluster/state?pretty
-      kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- curl http://localhost:9200/_cat/indices?v
-      ```
+      Check Elasticsearch cluster state and list of indices:
+        ```
+        kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- curl -u"cassandra:${CASS_PASSWORD}" https://localhost:9200/_cluster/state?pretty
+        kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- curl -u"cassandra:${CASS_PASSWORD}" https://localhost:9200/_cat/indices?v
+        ```
 
       Add a JSON document:
-      ```
-      kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- curl -XPUT -H "Content-Type: application/json" http://localhost:9200/test/mytype/1 -d '{ "foo":"bar" }'
-      ```
+        ```
+      kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- curl -XPUT -H "Content-Type: application/json" -u"cassandra:${CASS_PASSWORD}" https://localhost:9200/test/mytype/1 -d '{ "foo":"bar" }'
+        ```
 
-      # Accessing Elassandra using the headless service
+      ### Accessing Elassandra using the headless service
 
-      A headless service creates a DNS record for each elassandra pod. For instance :
-      ```
-      $ELASSANDRA_POD.$APP_INSTANCE_NAME.default.svc.cluster.local
-      ```
+      A headless service creates a DNS record for each Elassandra pod. For instance :
+        ```
+        $ELASSANDRA_POD.$APP_INSTANCE_NAME.default.svc.cluster.local
+        ```
 
-      Clients running inside the same k8s cluster could use thoses records to access both CQL, ES HTTP, ES transport, JMX and thrift protocols.
+        Clients running inside the same k8s cluster could use thoses records to access both CQL, ES HTTP, ES transport, JMX and thrift protocols (thrift is not supported with Elasticsearch).
 
-      # Accessing Elassandra with port forwarding
+        ### Accessing Elassandra with port forwarding
 
-      You could also use a local proxy to access the service.
+        A local proxy can also be used to access the service.
 
       Run the following command in a separate background terminal:
-      ```shell
-      kubectl port-forward "$ELASSANDRA_POD" 9042:9042 9200:9200 --namespace "$NAMESPACE"
-      ```
+        ```shell
+        kubectl port-forward "$ELASSANDRA_POD" 9042:9042 9200:9200 --namespace "$NAMESPACE"
+        ```
 
-      In you main terminal :
-      ```shell
-      curl localhost:9200
-      cqlsh --cqlversion=3.4.4
-      ```
-
-      # Deploy a Kibana pod (requires helm installed)
-
-      Start a Kibana pod with the same Elasticsearch version as the one provided by Elassandra. By default, Kibana connects to the Elasticsearch service on port 9200.
-
-      ```
-      helm install --namespace "$NAMESPACE" --name kibana --set image.tag=6.2.3 --set service.externalPort=5601 stable/kibana
-      ```
+      On you main terminal (requires curl and cqlsh commands):
+        ```shell
+        curl localhost:9200
+        cqlsh --cqlversion=3.4.4
+        ```
 
   selector:
     matchLabels:
