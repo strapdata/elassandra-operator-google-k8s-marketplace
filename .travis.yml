@@ -15,6 +15,7 @@ cache:
     - $HOME/google-cloud-sdk/
 
 before_install:
+  # Authenticate on GCR.IO docker registry
   - if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; curl https://sdk.cloud.google.com | bash; fi
   - source /home/travis/google-cloud-sdk/path.bash.inc
   - gcloud -v
@@ -25,6 +26,8 @@ before_install:
   - gcloud components install beta
   - gcloud components update
   - sudo apt-get install jq
+  # Authenticate on strapdata docker registry
+  - echo "$NEXUS_PASSWORD" | docker login --username "$NEXUS_USERNAME" docker.repo.strapdata.com --password-stdin
 
 install:
   - export GCLOUD_CLUSTER=${GCLOUD_CLUSTER}-$(head /dev/urandom | tr -dc 0-9 | head -c 4 ; echo '')
@@ -35,8 +38,8 @@ install:
   - ./scripts/uploadKibana.sh
 
 script:
-  - REPO_NAME=strapkop-staging make app/build
-  - REPO_NAME=strapkop-staging make app/verify
+  - REPO_NAME=elassandra-operator-staging make app/build
+  - REPO_NAME=elassandra-operator-staging make app/verify
 
 after_success:
   - gcloud container clusters delete $GCLOUD_CLUSTER --region $GCLOUD_ZONE
@@ -47,6 +50,6 @@ after_failure:
 deploy:
   - provider: script
     skip_cleanup: true
-    script: REPO_NAME=strapkop make app/build
+    script: REPO_NAME=elassandra-operator make app/build
     on:
       tags: true

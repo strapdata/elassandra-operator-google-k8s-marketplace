@@ -138,7 +138,8 @@ spec:
   prometheusEnabled: $config_prometheus_enabled
   reaperEnabled: $config_reaper_enabled
   reaper:
-    - image: "gcr.io/strapdata-gcp-partnership/strapkop-cassandra-reaper:v6.2.3.21"
+    - image: "gcr.io/strapdata-gcp-partnership/cassandra-reaper:1.4.7.1"
+  kibanaImage: "gcr.io/strapdata-gcp-partnership/kibana-oss:6.2.3"
   privilegedSupported: true
   hostPortEnabled: true
   nativePort : "$config_native_port"
