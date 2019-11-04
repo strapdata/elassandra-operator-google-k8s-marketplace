@@ -92,6 +92,15 @@ properties:
     type: string
     default: "datacenter"
 
+  config_workload:
+    title: Type of workload
+    type: string
+    default: "WRITE"
+    enum:
+      - "WRITE"
+      - "READ_WRITE"
+      - "READ"
+
   config_replicas:
     title: Number of elassandra nodes
     type: integer

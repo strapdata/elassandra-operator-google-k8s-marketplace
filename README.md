@@ -117,7 +117,9 @@ gcloud container clusters get-credentials <your-gke-cluster-name>
 Set up the following environment variables in accordance with your deployment:
 ```
 export NAMESPACE=default
-export APP_INSTANCE_NAME=elassandra-1
+# export CLUSTER_NAME as defined in the schema.yml (in this example cluster1)
+export CLUSTER_NAME=cluster1
+export APP_INSTANCE_NAME=elassandra-operator
 export ELASSANDRA_POD=$(kubectl get pods -n $NAMESPACE -l app=elassandra -l app.kubernetes.io/managed-by=elassandra-operator -o jsonpath='{.items[0].metadata.name}')
 ```
 

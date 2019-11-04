@@ -57,7 +57,9 @@ spec:
       Set up the following environment variables in accordance with your deployment:
         ```
         export NAMESPACE=default
-        export APP_INSTANCE_NAME=elassandra-1
+        # export CLUSTER_NAME as defined in the schema.yml (in this example cluster1)
+        export CLUSTER_NAME=cluster-test
+        export APP_INSTANCE_NAME=elassandra-operator
         export ELASSANDRA_POD=$(kubectl get pods -n $NAMESPACE -l app=elassandra -l app.kubernetes.io/managed-by=elassandra-operator -o jsonpath='{.items[0].metadata.name}')
         ```
 
@@ -88,7 +90,14 @@ spec:
       kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- curl -XPUT -H "Content-Type: application/json" -u"cassandra:${CASS_PASSWORD}" https://localhost:9200/test/mytype/1 -d '{ "foo":"bar" }'
         ```
 
+      Query the index:
+        ```
+      kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- curl -XGET -H "Content-Type: application/json" -u"cassandra:${CASS_PASSWORD}" "https://localhost:9200/test/_search?pretty" -d '{  }'
+        ```
+
       ### Accessing Elassandra using the headless service
+
+#TODO format DNS à valider sur az
 
       A headless service creates a DNS record for each Elassandra pod. For instance :
         ```

@@ -111,6 +111,7 @@ spec:
   datacenterName: "$config_datacenter"
   replicas: $config_replicas
   replicasMode: $config_replicas_mode
+  workload: $config_workload
   elassandraImage: "gcr.io/strapdata-gcp-partnership/strapkop-elassandra:v6.2.3.21"
   sidecarImage: "gcr.io/strapdata-gcp-partnership/strapkop-sidecar:v6.2.3.21"
   imagePullPolicy: Always
