@@ -43,18 +43,5 @@ exec nohup kubectl proxy &
 echo "gke: create google app crd"
 kubectl apply -f "https://raw.githubusercontent.com/GoogleCloudPlatform/marketplace-k8s-app-tools/master/crd/app-crd.yaml"
 
-echo "gke: creating NodeInfo ServiceAccount for namespace ${NAMESPACE}"
-
-kubectl apply -f rbac-node-info.yml
-kubectl create serviceaccount --namespace "${NAMESPACE}" nodeinfo
-kubectl create clusterrolebinding nodeinfo-cluster-role-binding --clusterrole=node-reader --serviceaccount="${NAMESPACE}:nodeinfo"
-SECRET_NAME=$(kubectl get secrets | grep ^nodeinfo | cut -f1 -d ' ')
-TOKEN=$(kubectl describe secret $SECRET_NAME | grep -E '^token' | cut -f2 -d':' | tr -d " ")
-
-echo "gke : fill token in test schema.yml with secretName : ${SECRET_NAME}"
-sed -i 's/__NODEINFO_TOKEN__/'$TOKEN'/' apptest/deployer/schema.yaml
-
 echo "gke: cluster created"
 
-# TO DELETE:
-# gcloud beta container clusters delete lab --region europe-west1-b

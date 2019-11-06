@@ -97,7 +97,7 @@ spec:
 
       ### Accessing Elassandra using the headless service
 
-#TODO format DNS à valider sur az
+      #TODO format DNS à valider sur az
 
       A headless service creates a DNS record for each Elassandra pod. For instance :
         ```

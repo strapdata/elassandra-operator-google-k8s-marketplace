@@ -15,7 +15,7 @@ properties:
     x-google-marketplace:
       type: IMAGE
 
-  operator.ServiceAccount:
+  operator_sa:
     type: string
     x-google-marketplace:
       type: SERVICE_ACCOUNT
@@ -63,13 +63,20 @@ properties:
               - apiGroups: ['']
                 resources:
                   - pods
-                verbs: ['list', 'delete']
+                  - serviceaccounts
+                verbs: ['get', 'list']
               - apiGroups: ['']
                 resources:
                   - services
                   - endpoints
                   - persistentvolumeclaims
                   - persistentvolumes
+                verbs: ['get', 'create', 'update', 'delete', 'list']
+              - apiGroups:
+                  - extensions
+                resources:
+                  - ingress
+                  - ingresses
                 verbs: ['get', 'create', 'update', 'delete', 'list']
               - nonResourceURLs: ["/version", "/version/*"]
                 verbs: ['get']
@@ -203,15 +210,26 @@ properties:
     minimum: 1024
     maximum: 65535
 
-  config_node_info_secret:
-    title: Token extracted from the NodeInfo ServiceAccount
+  elassandra_initcontainer_nodeinfo:
     type: string
+    x-google-marketplace:
+      type: SERVICE_ACCOUNT
+      serviceAccount:
+        roles:
+          - type: ClusterRole
+            rulesType: CUSTOM
+            rules:
+              - apiGroups: [""]
+                resources: ["nodes"]
+                verbs: ["get", "list", "watch"]
+              - apiGroups: [""]
+                resources: ["pods"]
+                verbs: ["get", "list", "watch"]
 
 required:
 - APP_INSTANCE_NAME
 - NAMESPACE
 - APP_IMAGE
-- config_node_info_secret
 
 x-google-marketplace:
   clusterConstraints:

@@ -8,7 +8,7 @@ properties:
   config_replicas:
     title: Number of elassandra nodes
     type: integer
-    default: 3
+    default: 2
     minimum: 1
 
   config_prometheus_enabled:
@@ -16,7 +16,3 @@ properties:
     type: boolean
     default: false
 
-  config_node_info_secret:
-    title: Token extracted from the NodeInfo ServiceAccount
-    type: string
-    default: "__NODEINFO_TOKEN__"
