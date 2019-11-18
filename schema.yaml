@@ -92,12 +92,14 @@ properties:
   config_cluster_name:
     title: Name of the elassandra cluster
     type: string
-    default: "elassandra"
+    default: "cluster1"
+    pattern: '^([0-9a-z]+)$'
 
   config_datacenter:
     title: Name of the elassandra datacenter
     type: string
-    default: "datacenter"
+    default: "dc1"
+    pattern: '^([0-9a-z]+)$'
 
   config_workload:
     title: Type of workload
@@ -210,7 +212,7 @@ properties:
     minimum: 1024
     maximum: 65535
 
-  elassandra_initcontainer_nodeinfo:
+  elassandra_initcontainernodeinfo:
     type: string
     x-google-marketplace:
       type: SERVICE_ACCOUNT
