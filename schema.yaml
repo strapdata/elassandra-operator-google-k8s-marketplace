@@ -64,7 +64,7 @@ properties:
                 resources:
                   - pods
                   - serviceaccounts
-                verbs: ['get', 'list']
+                verbs: ['get', 'list', 'watch']
               - apiGroups: ['']
                 resources:
                   - services
