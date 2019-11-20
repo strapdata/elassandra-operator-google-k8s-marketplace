@@ -8,7 +8,7 @@ properties:
   config_replicas:
     title: Number of elassandra nodes
     type: integer
-    default: 2
+    default: 1
     minimum: 1
 
   config_prometheus_enabled:

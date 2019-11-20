@@ -21,6 +21,7 @@ RUN wget -q -O /bin/kubectl \
 
 COPY tests/basic-suite.yaml /tests/basic-suite.yaml
 COPY tester.sh /tester.sh
+COPY tester-lib.sh /tester-lib.sh
 
 WORKDIR /
 ENTRYPOINT ["/tester.sh"]

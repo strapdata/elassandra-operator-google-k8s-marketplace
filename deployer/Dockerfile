@@ -36,6 +36,7 @@ COPY manifest/* /data/manifest/
 COPY schema.yaml /data/
 COPY apptest/deployer /data-test/
 
+
 # Provide registry prefix and tag for default values for images.
 ARG REGISTRY
 ARG TAG

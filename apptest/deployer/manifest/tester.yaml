@@ -9,6 +9,7 @@ metadata:
 spec:
   serviceAccount: ${APP_INSTANCE_NAME}-deployer-sa
   serviceAccountName: ${APP_INSTANCE_NAME}-deployer-sa
+  hostNetwork: false
   containers:
     - name: tester
       image: "${testerImage}"
@@ -20,4 +21,6 @@ spec:
               fieldPath: metadata.namespace
         - name: APP_INSTANCE_NAME
           value: ${APP_INSTANCE_NAME}
+        - name: TESTER_TIMEOUT
+          value: "900"
   restartPolicy: Never

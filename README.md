@@ -10,11 +10,59 @@ This repository contains instructions and files necessary for running Strapkop t
 # Overview
 
 As shown in the figure below, Elassandra nodes are deployed as a kubernetes statefulset, and expose two kubernetes services, one for Apache Cassandra and one for Elasticsearch.
-The operator container uses a "Datacenter" Custom Resource Definition to keep track of the Elassandra cluster state.  
+The operator container uses a "Datacenter" Custom Resource Definition to keep track of the Elassandra cluster state. (**Note**: the CRD must be created before the deployment of the application)
 
 ![Elassandra on Kubernetes](resources/gcp-k8s-strapkop.png)
 
-# Using the build tools
+# Installation 
+
+## Prerequisites
+   
+### Set up command line tools
+   
+You'll need the following tools in your development environment:
+- [gcloud](https://cloud.google.com/sdk/gcloud/)
+- [kubectl](https://kubernetes.io/docs/reference/kubectl/overview/)
+- [docker](https://docs.docker.com/install/)
+- [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+
+Configure `gcloud` as a Docker credential helper:
+
+```shell
+gcloud auth configure-docker
+```
+
+#### Create a Google Kubernetes Engine cluster
+
+```shell
+export CLUSTER=elassandra-operator-cluster
+export ZONE=europe-west1-b
+
+gcloud container clusters create "$CLUSTER" --zone "$ZONE"
+```
+
+Configure `kubectl` to connect to the new cluster:
+
+```shell
+gcloud container clusters get-credentials "$CLUSTER" --zone "$ZONE"
+```
+
+### Install the Elassandra Datacenter custom resource
+ 
+In order to allow the deployment of an instance of Datacenter, the CRD must be created before the application installation.
+
+**Note** : You need to run this command once.
+```bash
+kubectl apply -f https://raw.githubusercontent.com/strapdata/strapkop-google-k8s-marketplace/master/crd/datacenter-crd.yaml
+```
+
+## Quick install with Google Cloud Marketplace
+
+Get up and running with a few clicks! Install Elassandra Operator app to a
+Google Kubernetes Engine cluster using Google Cloud Marketplace. Follow the
+[on-screen instructions](https://console.cloud.google.com/marketplace/details/strapdata/elassandra-operator).
+
+# Install using the build tools
 
   [![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.png)](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/strapdata/elassandra-google-k8s-marketplace&tutorial=docs/google-kubernetes-tutorial.md)
   
@@ -23,7 +71,6 @@ The operator container uses a "Datacenter" Custom Resource Definition to keep tr
 Refer to `setup-k8s.sh` for instructions.
 These steps are only to be followed when standing up a new testing cluster for the purpose of testing the code in the repo.
 
-
 ### Build the container images
 
 The make task `app/build` is used for building two container images :
@@ -31,7 +78,7 @@ The make task `app/build` is used for building two container images :
 * a tester that package the integration tests
 
 ```
-export TAG=6.2.3.21
+export TAG=6.2.3.22
 make app/build
 ```
 
@@ -95,7 +142,7 @@ APP_PARAMETERS ?= { \
 ### Running Tests
 
 ```
-make app/verify
+make app/verify --additional_deployer_role=operator-deployer-extrarole
 ```
 
 That `app/verify` target, like many others, is provided for by Google's

@@ -17,62 +17,51 @@
 set -xeo pipefail
 shopt -s nullglob
 
-is_pod_ready() {
-   [[ "$(kubectl get po "$1" --namespace ${NAMESPACE} -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}')" == 'True' ]]
-}
-
-get_sts_name() {
-  kubectl get sts --namespace "${NAMESPACE}" | grep ^elassandra | cut -f1 -d ' '
-}
-
-get_cluster_name() {
-  kubectl get elassandradatacenters.stable.strapdata.com --namespace "${NAMESPACE}" -o=jsonpath='{$.items[0].spec.clusterName}'
-}
-
-get_datacenter_name() {
-  kubectl get elassandradatacenters.stable.strapdata.com --namespace "${NAMESPACE}" -o=jsonpath='{$.items[0].spec.datacenterName}'
-}
-
-get_cassandra_password() {
-  # SECRET_NAME = "elassandra-${clusterName}"
-  CASSANDRA_SECRET_NAME="elassandra-"$(get_cluster_name)
-  kubectl get secrets $CASSANDRA_SECRET_NAME --namespace "${NAMESPACE}" -o yaml | grep "cassandra.cassandra_password" | cut -f2 -d':' | tr -d " " | base64 -d
-}
-
-get_desired_number_of_replicas_in_sts() {
-  kubectl get sts "${STS_NAME}" \
-    --namespace "${NAMESPACE}" \
-    --output jsonpath='{.spec.replicas}'
-}
-
-get_current_number_of_replicas_in_sts() {
-  kubectl get sts "${STS_NAME}" \
-    --namespace "${NAMESPACE}" \
-    --output jsonpath='{.status.readyReplicas}'
-}
-
-wait_for_healthy_sts() {
-  info "Waiting for equal desired and current number of replicas"
-  while [[ $(get_current_number_of_replicas_in_sts) -ne $(get_desired_number_of_replicas_in_sts) ]]; do
-    info "Sleeping 10 seconds before rechecking..."
-    sleep 10
-  done
-  info "Statefulset has equal current and desired number of replicas"
-}
-
-is_pod_ready() {
-   [[ "$(kubectl get po "$1" --namespace ${NAMESPACE} -o 'jsonpath={.status.conditions[?(@.type=="Ready")].status}')" == 'True' ]]
-}
-
-wait_pod_ready(){
-  while true; do
-    echo "waiting for pod $1 to be ready"
-    is_pod_ready $1 && return 0
-    sleep 1
-  done
-}
+source /tester-lib.sh
 
 
-for test in /tests/*; do
-  testrunner "--test_spec=${test}"
-done
+info "Wait for Operator"
+wait_for_operator_creation
+
+info "Wait all operator pods or running"
+OPERATOR_NAME=$(get_operator_name)
+wait_for_healthy_operator
+
+kubectl get deployments "${OPERATOR_NAME}" \
+--namespace "${NAMESPACE}" \
+--output jsonpath='{.status.readyReplicas}'
+
+
+info "Wait for StatefulSets"
+wait_sts_creation
+STS_NAME=$(get_sts_name)
+wait_for_healthy_sts
+kubectl get sts "${STS_NAME}" \
+--namespace "${NAMESPACE}" \
+--output jsonpath='{.status.readyReplicas}'
+
+wait_pod_ready "${STS_NAME}-0"
+
+wait_numberOf_pod_in_NORMAL_state 1
+
+CLUSTER_NAME=$(get_cluster_name)
+DATACENTER_NAME=$(get_datacenter_name)
+
+CASSANDRA_PASSWORD=$(get_cassandra_password)
+export ELASSANDRA_HOST="${STS_NAME}-0.elassandra-${CLUSTER_NAME}-${DATACENTER_NAME}.${NAMESPACE}.svc.cluster.local"
+#cqlsh -u cassandra -p ${CASSANDRA_PASSWORD} -e 'SHOW HOST' --cqlversion="3.4.4" "${ELASSANDRA_HOST}" 39042 2>&1
+
+info "Check ES connection"
+curl -u "cassandra:${CASSANDRA_PASSWORD}" --insecure "https://${ELASSANDRA_HOST}:9200/" 2>&1
+
+# TODO clean by scaling down to 0...
+# "Clean to close the tester (otherwise it will wait for the termination of resources...)"
+
+STS_NAME=$(get_sts_name)
+CLUSTER_NAME=$(get_cluster_name)
+DATACENTER_NAME=$(get_datacenter_name)
+
+kubectl delete -n  "${NAMESPACE}" elassandradatacenter elassandra-${CLUSTER_NAME}-${DATACENTER_NAME}
+kubectl delete sts "${STS_NAME}" --namespace "${NAMESPACE}"
+kubectl delete -n  "${NAMESPACE}" svc -l app=elassandra
+#kubectl delete -n  "${NAMESPACE}" pvc -l app=elassandra

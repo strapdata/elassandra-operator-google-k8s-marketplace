@@ -39,7 +39,7 @@ install:
 
 script:
   - REPO_NAME=elassandra-operator-staging make app/build
-  - REPO_NAME=elassandra-operator-staging make app/verify
+  - REPO_NAME=elassandra-operator-staging make app/verify --additional_deployer_role=operator-deployer-extrarole
 
 after_success:
   - gcloud container clusters delete $GCLOUD_CLUSTER --region $GCLOUD_ZONE

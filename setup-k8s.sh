@@ -45,3 +45,11 @@ kubectl apply -f "https://raw.githubusercontent.com/GoogleCloudPlatform/marketpl
 
 echo "gke: cluster created"
 
+# we have to create the DC crd here to avoid permission issues with the marketplace deployer...
+echo "gke/operator: declare datacenter CRD"
+kubectl apply -f crd/datacenter-crd.yaml
+
+# we have to create the DC crd here to avoid permission issues with the marketplace deployer...
+echo "gke/operator-test: declare additional Role for the test phase"
+kubectl apply -f apptest/additional-deployer-role.yaml
+
