@@ -112,8 +112,8 @@ spec:
   replicas: $config_replicas
   replicasMode: $config_replicas_mode
   workload: $config_workload
-  elassandraImage: "gcr.io/strapdata-gcp-partnership/strapkop-elassandra-dev:6.2.3.21"
-  sidecarImage: "gcr.io/strapdata-gcp-partnership/strapkop-sidecar-dev:6.2.3.21"
+  elassandraImage: "gcr.io/strapdata-gcp-partnership/elassandra-node-dev:6.2.3.21"
+  sidecarImage: "gcr.io/strapdata-gcp-partnership/elassandra-sidecar-dev:6.2.3.21"
   imagePullPolicy: Always
   elasticsearchEnabled: $config_elastic_enabled
   resources:

@@ -32,7 +32,7 @@ spec:
       - strapdata
     links:
       - description: GKE User Guide
-        url: https://github.com/strapdata/strapkop-google-k8s-marketplace
+        url: https://github.com/strapdata/elassandra-operator-google-k8s-marketplace
       - description: Elassandra documentation
         url: http://doc.elassandra.io/en/latest/
       - description: Apache Cassandra documentation

@@ -1,10 +1,10 @@
-# Strapkop Google k8s Marketplace
+# Elassandra Operator Google k8s Marketplace
 
 [![Build Status](https://travis-ci.org/strapdata/elassandra-google-k8s-marketplace.svg?branch=master)](https://travis-ci.org/strapdata/elassandra-google-k8s-marketplace)
 
 ![Elassandra Logo](resources/elassandra-logo.png)
 
-This repository contains instructions and files necessary for running Strapkop the [Elassandra](https://github.com/strapdata/elassandra) operator via 
+This repository contains instructions and files necessary for running the [Elassandra](https://github.com/strapdata/elassandra) operator via 
 [Google's Hosted Kubernetes Marketplace](https://console.cloud.google.com/marketplace/browse?filter=solution-type:k8s).
 
 # Overview
@@ -12,7 +12,7 @@ This repository contains instructions and files necessary for running Strapkop t
 As shown in the figure below, Elassandra nodes are deployed as a kubernetes statefulset, and expose two kubernetes services, one for Apache Cassandra and one for Elasticsearch.
 The operator container uses a "Datacenter" Custom Resource Definition to keep track of the Elassandra cluster state. (**Note**: the CRD must be created before the deployment of the application)
 
-![Elassandra on Kubernetes](resources/gcp-k8s-strapkop.png)
+![Elassandra on Kubernetes](resources/gcp-k8s-operator.png)
 
 # Installation 
 
@@ -53,7 +53,7 @@ In order to allow the deployment of an instance of Datacenter, the CRD must be c
 
 **Note** : You need to run this command once.
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/strapdata/strapkop-google-k8s-marketplace/master/crd/datacenter-crd.yaml
+kubectl apply -f https://raw.githubusercontent.com/strapdata/elassandra-operator-google-k8s-marketplace/master/crd/datacenter-crd.yaml
 ```
 
 ## Quick install with Google Cloud Marketplace
