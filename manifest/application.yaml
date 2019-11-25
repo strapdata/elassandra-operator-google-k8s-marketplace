@@ -58,7 +58,9 @@ spec:
         ```
         export NAMESPACE=default
         # export CLUSTER_NAME as defined in the schema.yml (in this example cluster1)
-        export CLUSTER_NAME=cluster-test
+        export CLUSTER_NAME=cluster1
+        # export DATACENTER_NAME as defined in the schema.yml (in this example dc1)
+        export CLUSTER_NAME=dc1
         export APP_INSTANCE_NAME=elassandra-operator
         export ELASSANDRA_POD=$(kubectl get pods -n $NAMESPACE -l app=elassandra -l app.kubernetes.io/managed-by=elassandra-operator -o jsonpath='{.items[0].metadata.name}')
         ```
@@ -67,7 +69,9 @@ spec:
 
       Check your Cassandra cluster status by running the following command :
         ```shell
-        kubectl exec "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- nodetool status
+        kubectl exec "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- bash
+        $>source /usr/share/cassandra/aliases.sh
+        $>nodetool status
         ```
 
       Connect to Cassandra using cqlsh:
@@ -97,22 +101,21 @@ spec:
 
       ### Accessing Elassandra using the headless service
 
-      #TODO format DNS à valider sur az
-
       A headless service creates a DNS record for each Elassandra pod. For instance :
-        ```
-        $ELASSANDRA_POD.$APP_INSTANCE_NAME.default.svc.cluster.local
-        ```
 
-        Clients running inside the same k8s cluster could use thoses records to access both CQL, ES HTTP, ES transport, JMX and thrift protocols (thrift is not supported with Elasticsearch).
+      ```
+      $ELASSANDRA_POD.elassandra-$CLUSTER_NAME-$DATACENTER_NAME.default.svc.cluster.local
+      ```
 
-        ### Accessing Elassandra with port forwarding
+      Clients running inside the same k8s cluster could use thoses records to access both CQL, ES HTTP, ES transport and JMX protocols.
 
-        A local proxy can also be used to access the service.
+      ### Accessing Elassandra with port forwarding
+
+      A local proxy can also be used to access the service.
 
       Run the following command in a separate background terminal:
         ```shell
-        kubectl port-forward "$ELASSANDRA_POD" 9042:9042 9200:9200 --namespace "$NAMESPACE"
+        kubectl port-forward "$ELASSANDRA_POD" 9042:39042 9200:9200 --namespace "$NAMESPACE"
         ```
 
       On you main terminal (requires curl and cqlsh commands):

@@ -1,11 +1,13 @@
 # Elassandra Operator Google k8s Marketplace
 
-[![Build Status](https://travis-ci.org/strapdata/elassandra-google-k8s-marketplace.svg?branch=master)](https://travis-ci.org/strapdata/elassandra-google-k8s-marketplace)
+[![Build Status](https://travis-ci.org/strapdata/elassandra-operator-google-k8s-marketplace.svg?branch=master)](https://travis-ci.org/strapdata/elassandra-operator-google-k8s-marketplace)
 
 ![Elassandra Logo](resources/elassandra-logo.png)
 
 This repository contains instructions and files necessary for running the [Elassandra](https://github.com/strapdata/elassandra) operator via 
 [Google's Hosted Kubernetes Marketplace](https://console.cloud.google.com/marketplace/browse?filter=solution-type:k8s).
+
+**NOTE**: This operator is currently in Beta version. 
 
 # Overview
 
@@ -52,6 +54,7 @@ gcloud container clusters get-credentials "$CLUSTER" --zone "$ZONE"
 In order to allow the deployment of an instance of Datacenter, the CRD must be created before the application installation.
 
 **Note** : You need to run this command once.
+
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/strapdata/elassandra-operator-google-k8s-marketplace/master/crd/datacenter-crd.yaml
 ```
@@ -142,11 +145,12 @@ APP_PARAMETERS ?= { \
 ### Running Tests
 
 ```
+kubectl apply -f https://raw.githubusercontent.com/strapdata/elassandra-operator-google-k8s-marketplace/master/apptest/additional-deployer-role.yaml
 make app/verify --additional_deployer_role=operator-deployer-extrarole
 ```
 
-That `app/verify` target, like many others, is provided for by Google's
-marketplace tools repo; for further details, please see app.Makefile in that repo for full details. 
+That `app/verify` target, like many others, is provided for by Google's marketplace tools repo; 
+for further details, please see app.Makefile in that repo for full details. 
 
 # Getting started with Elassandra & Elassandra Operator
 
@@ -174,10 +178,13 @@ export ELASSANDRA_POD=$(kubectl get pods -n $NAMESPACE -l app=elassandra -l app.
 
 Check your Cassandra cluster status by running the following command :
 ```shell
-kubectl exec "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- nodetool status  
+kubectl exec "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- bash
+cassandra$> source /usr/shared/cassandra/aliases.sh  
+cassandra$> nodetool status  
 ```
 
 Connect to Cassandra using cqlsh:
+
 ```shell
 # retrive cassandra user password
 CASS_PASSWORD=$(kubectl get secrets elassandra-${CLUSTER_NAME} -o yaml | grep "cassandra.cassandra_password" | cut -f2 -d':' | tr -d ' ' | base64 -d)
@@ -188,6 +195,7 @@ kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- cql
 
 Check Elasticsearch cluster state and list of indices:
 ```
+CASS_PASSWORD=$(kubectl get secrets elassandra-${CLUSTER_NAME} -o yaml | grep "cassandra.cassandra_password" | cut -f2 -d':' | tr -d ' ' | base64 -d)
 kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- curl -u"cassandra:${CASS_PASSWORD}" https://localhost:9200/_cluster/state?pretty
 kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- curl -u"cassandra:${CASS_PASSWORD}" https://localhost:9200/_cat/indices?v
 ```
@@ -200,11 +208,13 @@ kubectl exec -it "$ELASSANDRA_POD" --namespace "$NAMESPACE" -c elassandra -- cur
 ### Accessing Elassandra using the headless service
 
 A headless service creates a DNS record for each Elassandra pod. For instance :
-```
-$ELASSANDRA_POD.$APP_INSTANCE_NAME.default.svc.cluster.local
-```
 
-Clients running inside the same k8s cluster could use thoses records to access both CQL, ES HTTP, ES transport, JMX and thrift protocols (thrift is not supported with Elasticsearch).
+```
+$ELASSANDRA_POD.elassandra-${CLUSTER_NAME}-${DATACENTER_NAME}.default.svc.cluster.local
+```
+Where _CLUSTER_NAME_ and _DATACENTER_NAME_ must be replaced by the value set in the schema.yaml for **config_cluster_name** and **config_datacenter** variables.
+ 
+Clients running inside the same k8s cluster could use those records to access both CQL, ES HTTP, ES transport and JMX protocols.
 
 ### Accessing Elassandra with port forwarding
 
@@ -212,38 +222,16 @@ A local proxy can also be used to access the service.
 
 Run the following command in a separate background terminal:
 ```shell
-kubectl port-forward "$ELASSANDRA_POD" 9042:9042 9200:9200 --namespace "$NAMESPACE"
+kubectl port-forward "$ELASSANDRA_POD" 9042:39042 9200:9200 --namespace "$NAMESPACE"
 ```
 
 On you main terminal (requires curl and cqlsh commands):
 ```shell
-curl localhost:9200
-cqlsh --cqlversion=3.4.4
+curl -u"cassandra:${CASS_PASSWORD}" "https://localhost:9200"
+cqlsh -u cassandra -p ${CASS_PASSWORD} --cqlversion=3.4.4
 ```
-        
-### Deploying Kibana 
-
-// TODO
-
-# Backup and Restore
-
-// TODO
-
-# Updating Elassandra
-
-Before upgrading, it is recommended to snapshot your data.
-
-// TODO 
-
-## Update the cluster nodes
-
-### Patch the StatefulSet with the new image
-
-// TODO
 
 # Uninstall the Application
-
-// TODO 
 
 ## Using the Google Cloud Platform Console
 
@@ -252,6 +240,9 @@ Before upgrading, it is recommended to snapshot your data.
 1. From the list of applications, click **Elassandra Operator**.
 
 1. On the Application Details page, click **Delete**.
+
+Once application is removed, you mya have to delete all resources created by the operator.
+See [Delete elassandra nodes](#Delete-the-elassandra-nodes-kibana-and-reaper) and [Delete your persistente volumes](#Delete-the-persistent-volumes-of-your-installation)
 
 ## Using the command line
 
@@ -268,21 +259,35 @@ export NAMESPACE=default
 
 > **NOTE:** It is recommended to use a kubectl version that is the same as the version of your cluster. Using the same versions of kubectl and cluster will help avoid unforeseen issues.
 
-To delete the resources, use the expanded manifest file used for the
-installation.
-
-Run `kubectl` on the expanded manifest file:
+To delete the resources use types and labels:
 
 ```shell
-kubectl delete -f ${APP_INSTANCE_NAME}_manifest.yaml --namespace $NAMESPACE
+kubectl delete application --namespace $NAMESPACE  $APP_INSTANCE_NAME
 ```
 
-Otherwise, delete the resources using types and a label:
+### Delete the elassandra nodes, kibana and reaper
+
+The operator will create additional resources according to your instance of Datacenter CRD. 
+You have to delete them by yourself.
 
 ```shell
-kubectl delete application,statefulset,service \
+# delete Kibana deployment
+kubectl delete deploy \
   --namespace $NAMESPACE \
-  --selector app.kubernetes.io/name=$APP_INSTANCE_NAME
+  --selector app.kubernetes.io/managed-by=elassandra-operator
+  --selector app=kibana
+
+# delete Reaper deployment
+kubectl delete deploy \
+  --namespace $NAMESPACE \
+  --selector app.kubernetes.io/managed-by=elassandra-operator
+  --selector app=reaper
+
+# delete Elassandra nodes
+kubectl delete sts \
+  --namespace $NAMESPACE \
+  --selector app.kubernetes.io/managed-by=elassandra-operator
+  --selector app=elassandra
 ```
 
 ### Delete the persistent volumes of your installation
@@ -304,7 +309,7 @@ done
 
 kubectl delete persistentvolumeclaims \
   --namespace $NAMESPACE \
-  --selector app.kubernetes.io/name=$APP_INSTANCE_NAME
+  --selector app.kubernetes.io/managed-by=elassandra-operator
 ```
 
 ### Delete the GKE cluster

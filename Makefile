@@ -1,4 +1,4 @@
-TAG ?= 6.2.3.21
+TAG ?= 6.2.3.22
 TAG_TRACK ?= $(shell echo ${TAG} | sed 's/\([0-9]\+\.[0-9]\+\).*$$/\1/g')
 TAG_TRACK2 ?= $(shell echo ${TAG} | sed 's/\([0-9]\+\.[0-9]\+\.[0-9]\+\).*$$/\1/g')
 
@@ -14,7 +14,9 @@ include tools/crd.Makefile
 include tools/var.Makefile
 include tools/app.Makefile
 
-UPSTREAM_IMAGE = docker.repo.strapdata.com/strapdata/strapkop-operator:$(TAG)
+UPSTREAM_IMAGE_NAME = docker.repo.strapdata.com/strapdata/elassandra-operator
+UPSTREAM_IMAGE = $(UPSTREAM_IMAGE_NAME):$(TAG)
+
 APP_MAIN_IMAGE ?= $(REGISTRY)$(REPO_NAME):$(TAG)
 APP_MAIN_IMAGE_TRACK ?= $(REGISTRY)$(REPO_NAME):$(TAG_TRACK)
 APP_MAIN_IMAGE_TRACK2 ?= $(REGISTRY)$(REPO_NAME):$(TAG_TRACK2)
@@ -23,7 +25,7 @@ APP_DEPLOYER_IMAGE ?= $(REGISTRY)$(REPO_NAME)/deployer:$(TAG)
 APP_DEPLOYER_IMAGE_TRACK ?= $(REGISTRY)$(REPO_NAME)/deployer:$(TAG_TRACK)
 APP_DEPLOYER_IMAGE_TRACK2 ?= $(REGISTRY)$(REPO_NAME)/deployer:$(TAG_TRACK2)
 
-NAME ?= elassandra-1
+NAME ?= elassandra-operator
 APP_PARAMETERS ?= { \
   "APP_INSTANCE_NAME": "$(NAME)", \
   "NAMESPACE": "$(NAMESPACE)", \
@@ -60,6 +62,7 @@ app/build:: .build/strapkop/deployer \
 	docker build \
 	    --build-arg REGISTRY="$(REGISTRY)$(REPO_NAME)" \
 	    --build-arg TAG="$(TAG)" \
+	    --build-arg MARKETPLACE_TOOLS_TAG="$(MARKETPLACE_TOOLS_TAG)" \
 	    --tag "$(APP_DEPLOYER_IMAGE)" \
 	    --tag "$(APP_DEPLOYER_IMAGE_TRACK)" \
 		--tag "$(APP_DEPLOYER_IMAGE_TRACK2)" \
@@ -71,13 +74,12 @@ app/build:: .build/strapkop/deployer \
 	@touch "$@"
 
 
-.build/strapkop/strapkop:
-							.build/var/APP_MAIN_IMAGE \
-							.build/var/REGISTRY \
+.build/strapkop/strapkop: .build/var/APP_MAIN_IMAGE \
+                            .build/var/REGISTRY \
                             .build/var/TAG \
-                           | .build/strapkop
+                            | .build/strapkop
 
-	docker pull $(UPSTREAM_IMAGE)
+	#docker pull $(UPSTREAM_IMAGE)
 	docker tag "$(UPSTREAM_IMAGE)" "$(APP_MAIN_IMAGE)"
 	docker tag "$(UPSTREAM_IMAGE)" "$(APP_MAIN_IMAGE_TRACK)"
 	docker tag "$(UPSTREAM_IMAGE)" "$(APP_MAIN_IMAGE_TRACK2)"
