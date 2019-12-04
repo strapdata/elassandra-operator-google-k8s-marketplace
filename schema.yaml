@@ -118,9 +118,9 @@ properties:
   config_replicas_mode:
     title: Attribution of the number of elassandra nodes
     type: string
-    default: "manual"
+    default: "MANUAL"
     enum:
-    - "manual"
+    - "MANUAL"
     #- "n"
     #- "n-1"
 
